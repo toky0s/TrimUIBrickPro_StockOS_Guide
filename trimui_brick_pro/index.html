@@ -9,10 +9,9 @@
 </head>
 
 <body>
-
     <div class="tree-container">
         <h3 class="title">📁 Cấu trúc thư mục Rom - TrimUI Brick Pro</h3>
-        
+
         <!-- Tab Navigation -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('tab-tree')">📑 Roms folder tree</button>
@@ -38,7 +37,7 @@
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
+
             document.getElementById(tabId).classList.add('active');
             document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
         }
@@ -126,7 +125,7 @@
                 // BƯỚC 3: XUẤT RA HTML (Cho cả Tree và Cards)
                 let htmlTree = '';
                 let htmlCards = '';
-                
+
                 parsedData.forEach(item => {
                     // Cấu trúc Data Huy hiệu (Badge)
                     const extensions = item.rawExt ? item.rawExt
@@ -207,4 +206,5 @@
     </script>
 
 </body>
+
 </html>
