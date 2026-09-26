@@ -5,193 +5,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrimUI Brick Pro - ROM Directory</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f3f4f6;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .tree-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .title {
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #111827;
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        /* Expander Frame */
-        details.folder-item {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            overflow: hidden;
-            transition: all 0.2s ease;
-        }
-
-        details.folder-item[open] {
-            border-color: #d97706;
-            box-shadow: 0 2px 5px rgba(217, 119, 6, 0.15);
-        }
-
-        /* Summary Header */
-        summary.folder-header {
-            font-weight: 600;
-            color: #1f2937;
-            padding: 12px 16px;
-            background: #fafafa;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            user-select: none;
-            list-style: none;
-        }
-
-        summary.folder-header::-webkit-details-marker {
-            display: none;
-        }
-
-        summary.folder-header:hover {
-            background: #f3f4f6;
-        }
-
-        .arrow-icon {
-            margin-right: 10px;
-            font-size: 0.75em;
-            color: #9ca3af;
-            transition: transform 0.2s ease;
-            display: inline-block;
-        }
-
-        details[open] .arrow-icon {
-            transform: rotate(90deg);
-            color: #d97706;
-        }
-
-        .folder-path {
-            color: #d97706;
-            font-family: monospace;
-            font-size: 1.05em;
-        }
-
-        .console-name {
-            color: #6b7280;
-            font-size: 0.85em;
-            margin-left: auto;
-            font-weight: normal;
-        }
-
-        /* Details Body */
-        .details-body {
-            padding: 16px;
-            color: #374151;
-            font-size: 0.9em;
-            background: #ffffff;
-            border-top: 1px dashed #e5e7eb;
-        }
-
-        /* Extension Badges */
-        .ext-badge {
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-weight: bold;
-            margin-right: 4px;
-            display: inline-block;
-            border: 1px solid #bae6fd;
-        }
-
-        /* Layout Layout: Ảnh bên trái - Mô tả bên phải */
-        .content-wrapper {
-            display: flex;
-            gap: 16px;
-            margin-top: 14px;
-            align-items: flex-start;
-        }
-
-        .img-box {
-            flex-shrink: 0;
-            width: fit-content;
-            height: 300px;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-            background-color: #f8fafc;
-        }
-
-        .img-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .desc-box {
-            flex-grow: 1;
-            line-height: 1.5;
-            color: #4b5563;
-        }
-
-        .web-link-btn {
-            display: inline-block;
-            margin-top: 8px;
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.85em;
-        }
-
-        .web-link-btn:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
     <div class="tree-container">
         <h3 class="title">📁 Cấu trúc thư mục Rom - TrimUI Brick Pro</h3>
-        <div id="rom-tree">Đang tải dữ liệu từ Google Sheet...</div>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-tree')">📑 Roms folder tree</button>
+            <button class="tab-btn" onclick="switchTab('tab-cards')">🗂️ Folder cards view</button>
+        </div>
+
+        <!-- Tab 1: Tree View -->
+        <div id="tab-tree" class="tab-content active">
+            <div id="rom-tree">Đang tải dữ liệu từ Google Sheet...</div>
+        </div>
+
+        <!-- Tab 2: Cards View -->
+        <div id="tab-cards" class="tab-content">
+            <div id="rom-cards" class="cards-grid">Đang tải dữ liệu từ Google Sheet...</div>
+        </div>
     </div>
 
     <script>
         const sheetID = '1mJiP3IOBUEbPFKa7I2FNnhqp4SJZhtQpnE9ScgrBdI0';
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv`;
 
-        // Hàm tự động chuyển đổi URL Google Drive thành Link hiển thị ảnh trực tiếp
+        // Logic chuyển Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        }
+
+        // Logic mở Expander từ Card View
+        function openTreeItem(index) {
+            switchTab('tab-tree');
+            const detailsEl = document.getElementById(`tree-item-${index}`);
+            if (detailsEl) {
+                detailsEl.open = true;
+                // Cuộn mượt mà tới vị trí của thẻ details để người dùng dễ nhìn
+                detailsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
         function formatDriveImageUrl(urlOrId) {
             if (!urlOrId || urlOrId.trim() === '' || urlOrId.toLowerCase() === 'yes') return '';
             const str = urlOrId.trim();
-
-            // Nếu là đường link Google Drive dạng /file/d/ID/view
             const driveMatch = str.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (driveMatch && driveMatch[1]) {
                 return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
             }
-            // Nếu người dùng chỉ dán mã ID trực tiếp
             if (!str.startsWith('http')) {
                 return `https://lh3.googleusercontent.com/d/${str}`;
             }
             return str;
         }
 
-        // Hàm hỗ trợ đọc file CSV có chứa dấu phẩy bên trong ngoặc kép
         function parseCSVLine(text) {
             const result = [];
             let cell = '';
             let inQuotes = false;
-
             for (let i = 0; i < text.length; i++) {
                 let c = text[i];
                 if (c === '"') {
@@ -214,66 +93,118 @@
             })
             .then(csvText => {
                 const lines = csvText.split('\n').filter(line => line.trim() !== '');
-                const rows = lines.slice(1); // Bỏ hàng Header
-                let html = '';
+                const rows = lines.slice(1);
 
-                rows.forEach(row => {
+                // BƯỚC 1: LƯU TẤT CẢ DỮ LIỆU VÀO MẢNG
+                let parsedData = rows.map((row, originalIndex) => {
                     const cols = parseCSVLine(row);
+                    if (cols.length < 2) return null;
 
-                    if (cols.length >= 2) {
-                        const consoleName = cols[0] || '';
-                        const folderName = cols[1] || '';
-                        const rawExt = cols[2] || '';
-                        const description = cols[3] || '';
-                        const pictureRaw = cols[4] || '';
-                        const webLink = cols[5] || '';
+                    const isEmulatorRaw = (cols[6] || '').trim().toUpperCase();
+                    const isEmulator = isEmulatorRaw === 'TRUE' || isEmulatorRaw === 'YES';
 
-                        // Tạo badge đuôi file
-                        const extensions = rawExt ? rawExt
-                            .split('|')
-                            .filter(ext => ext.length != 0)
-                            .map(ext => `<span class="ext-badge">${ext.trim()}</span>`).join('') : '<span style="color:#9ca3af; font-style:italic;">Không yêu cầu</span>';
+                    const yearRaw = (cols[7] || '').trim();
+                    const yearNum = parseInt(yearRaw);
 
-                        // Lấy đường link ảnh chuẩn
-                        const imgUrl = formatDriveImageUrl(pictureRaw);
+                    return {
+                        idIndex: originalIndex, // Giữ ID gốc để scroll
+                        consoleName: cols[0] || '',
+                        folderName: cols[1] || '',
+                        rawExt: cols[2] || '',
+                        pictureRaw: cols[3] || '',
+                        webLink: cols[4] || '',
+                        description: cols[5] || '',
+                        isEmulator: isEmulator,
+                        yearStr: yearRaw,
+                        sortYear: isNaN(yearNum) ? 9999 : yearNum
+                    };
+                }).filter(item => item !== null);
 
-                        html += `
-                        <details class="folder-item">
-                            <summary class="folder-header">
-                                <span class="arrow-icon">▶</span>
-                                📂&nbsp;<span class="folder-path">Roms/${folderName}</span>
-                                <span class="console-name">(${consoleName})</span>
-                            </summary>
-                            <div class="details-body">
-                                <div><strong>Đuôi file hợp lệ:</strong> ${extensions}</div>
-                                
-                                ${(description || imgUrl) ? `
-                                <div class="content-wrapper">
-                                    ${imgUrl ? `
-                                        <div class="img-box">
-                                            <img src="${imgUrl}" alt="${consoleName}" loading="lazy" onerror="this.parentElement.style.display='none'">
-                                        </div>
-                                    ` : ''}
-                                    
-                                    <div class="desc-box">
-                                        ${description ? `<div>${description}</div>` : ''}
-                                        ${webLink ? `<div><a href="${webLink}" target="_blank" class="web-link-btn">🌐 Xem tài liệu / Chi tiết ➔</a></div>` : ''}
-                                    </div>
-                                </div>
-                                ` : ''}
+                // BƯỚC 2: SẮP XẾP MẢNG
+                parsedData.sort((a, b) => a.sortYear - b.sortYear);
+
+                // BƯỚC 3: XUẤT RA HTML (Cho cả Tree và Cards)
+                let htmlTree = '';
+                let htmlCards = '';
+                
+                parsedData.forEach(item => {
+                    // Cấu trúc Data Huy hiệu (Badge)
+                    const extensions = item.rawExt ? item.rawExt
+                        .split('|')
+                        .filter(ext => ext.length !== 0)
+                        .map(ext => `<span class="ext-badge">${ext.trim()}</span>`).join('')
+                        : '<span style="color:#9ca3af; font-style:italic;">Không yêu cầu</span>';
+
+                    const imgUrl = formatDriveImageUrl(item.pictureRaw);
+                    const typeBadgeHtml = item.isEmulator
+                        ? `<span class="type-badge emulator-badge">⚙️ Giả lập</span>`
+                        : `<span class="type-badge console-badge">🎮 Dòng máy</span>`;
+                    const yearBadgeHtml = item.yearStr
+                        ? `<span class="year-badge">${item.yearStr}</span>`
+                        : '';
+
+                    // 1. Dựng giao diện Tree (Tab 1)
+                    htmlTree += `
+                    <details class="folder-item" id="tree-item-${item.idIndex}">
+                        <summary class="folder-header">
+                            <span class="arrow-icon">▶</span>
+                            📂&nbsp;<span class="folder-path">Roms/${item.folderName}</span>
+                            
+                            <div class="header-right-info">
+                                <span class="console-name">${item.consoleName}</span>
+                                ${yearBadgeHtml}
+                                ${typeBadgeHtml}
                             </div>
-                        </details>
+                        </summary>
+                        <div class="details-body">
+                            <div><strong>Đuôi file hợp lệ:</strong> ${extensions}</div>
+                            
+                            ${(item.description || imgUrl) ? `
+                            <div class="content-wrapper">
+                                ${imgUrl ? `
+                                    <div class="img-box">
+                                        <img src="${imgUrl}" alt="${item.consoleName}" loading="lazy" onerror="this.parentElement.style.display='none'">
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="desc-box">
+                                    ${item.description ? `<div>${item.description}</div>` : ''}
+                                    ${item.webLink ? `<div><a href="${item.webLink}" target="_blank" class="web-link-btn">🌐 Xem tài liệu / Chi tiết ➔</a></div>` : ''}
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </details>
                     `;
-                    }
+
+                    // 2. Dựng giao diện Cards (Tab 2)
+                    // Image fallback xử lý lỗi ảnh tự động ẩn theo quy chuẩn[cite: 4]
+                    htmlCards += `
+                    <div class="card" onclick="openTreeItem(${item.idIndex})">
+                        <div class="card-img-wrapper">
+                            ${imgUrl ? `<img src="${imgUrl}" alt="${item.consoleName}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'placeholder-icon\\'>🎮</div>'">` : `<div class="placeholder-icon">📁</div>`}
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title">${item.consoleName || item.folderName}</div>
+                            <div class="card-badges">
+                                ${yearBadgeHtml}
+                                ${typeBadgeHtml}
+                            </div>
+                            <div class="card-folder">/roms/${item.folderName}</div>
+                        </div>
+                    </div>
+                    `;
                 });
-                document.getElementById('rom-tree').innerHTML = html || 'Không tìm thấy dữ liệu.';
+
+                document.getElementById('rom-tree').innerHTML = htmlTree || 'Không tìm thấy dữ liệu.';
+                document.getElementById('rom-cards').innerHTML = htmlCards || 'Không tìm thấy dữ liệu.';
             })
             .catch(err => {
                 console.error('Lỗi:', err);
                 document.getElementById('rom-tree').innerHTML = '<span style="color:red;">Lỗi kết nối dữ liệu từ Google Sheet.</span>';
+                document.getElementById('rom-cards').innerHTML = '<span style="color:red;">Lỗi kết nối dữ liệu.</span>';
             });
     </script>
 
 </body>
-
 </html>
