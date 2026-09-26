@@ -4,30 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Một trang web đơn giản giúp bạn tra 
-    cứu các tệp tin phù hợp với từng giả 
-    lập có trong máy chơi game cầm tay 
-    TRIMUI BRICK PRO.">
+    <meta name="description" content="Một trang web đơn giản giúp bạn tra cứu các tệp tin phù hợp với từng giả lập có trong máy chơi game cầm tay TRIMUI BRICK PRO.">
     <title>TrimUI Brick Pro - ROM Directory</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-89TNR8YBLQ"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-
     gtag('config', 'G-89TNR8YBLQ');
 </script>
+
 <body>
     <div class="tree-container">
         <h3 class="title">📁 Cấu trúc thư mục Rom - TrimUI Brick Pro</h3>
 
         <!-- Tab Navigation -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-tree')">📑 Roms folder tree</button>
-            <button class="tab-btn" onclick="switchTab('tab-cards')">🗂️ Folder cards view</button>
+            <button class="tab-btn active" id="btn-tab-tree" onclick="switchTab('tab-tree')">📑 Roms folder tree</button>
+            <button class="tab-btn" id="btn-tab-cards" onclick="switchTab('tab-cards')">🗂️ Folder cards view</button>
         </div>
 
         <!-- Tab 1: Tree View -->
@@ -45,23 +43,79 @@
         const sheetID = '1mJiP3IOBUEbPFKa7I2FNnhqp4SJZhtQpnE9ScgrBdI0';
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv`;
 
-        // Logic chuyển Tab
-        function switchTab(tabId) {
+        // Lắng nghe sự kiện Back / Forward của trình duyệt
+        window.addEventListener('popstate', (event) => {
+            handleUrlState(false); 
+        });
+
+        // Hàm xử lý URL State để điều hướng Tab và mở Folder
+        function handleUrlState(pushHistory = true) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const view = urlParams.get('view');
+            const folder = urlParams.get('folder');
+
+            // Xác định tab sẽ mở dựa trên param (mặc định là tree)
+            const targetTab = view === 'card' ? 'tab-cards' : 'tab-tree';
+            
+            // Chuyển tab mà không push thêm lịch sử (nếu đang xử lý back/forward)
+            switchTab(targetTab, pushHistory);
+
+            // Nếu URL yêu cầu mở một folder cụ thể
+            if (targetTab === 'tab-tree' && folder) {
+                setTimeout(() => openFolderByString(folder), 200); // Đợi DOM render/transition
+            }
+        }
+
+        // Logic chuyển Tab có hỗ trợ History API
+        function switchTab(tabId, pushHistory = true) {
+            // Xóa active cũ
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
+            // Gán active mới
             document.getElementById(tabId).classList.add('active');
-            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            if (tabId === 'tab-tree') {
+                document.getElementById('btn-tab-tree').classList.add('active');
+            } else {
+                document.getElementById('btn-tab-cards').classList.add('active');
+            }
+
+            // Xử lý đẩy vào Lịch sử duyệt Web (Push State)
+            if (pushHistory) {
+                const viewName = tabId === 'tab-tree' ? 'list' : 'card';
+                const url = new URL(window.location);
+                url.searchParams.set('view', viewName);
+                url.searchParams.delete('folder'); // Xóa params folder nếu tự tay chuyển tab
+                window.history.pushState({ tab: tabId }, '', url);
+            }
         }
 
-        // Logic mở Expander từ Card View
-        function openTreeItem(index) {
-            switchTab('tab-tree');
+        // Logic mở Expander từ ID (Dùng khi Click từ Card)
+        function openTreeItem(index, folderName) {
+            switchTab('tab-tree', false); // Chuyển giao diện mà chưa push state vội
+
             const detailsEl = document.getElementById(`tree-item-${index}`);
             if (detailsEl) {
                 detailsEl.open = true;
-                // Cuộn mượt mà tới vị trí của thẻ details để người dùng dễ nhìn
-                detailsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    detailsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+
+            // Push State mới vào lịch sử chứa biến folder
+            const url = new URL(window.location);
+            url.searchParams.set('view', 'list');
+            url.searchParams.set('folder', folderName);
+            window.history.pushState({ tab: 'tab-tree', folder: folderName }, '', url);
+        }
+
+        // Logic mở Expander từ Query String (Dùng khi F5 hoặc Back/Forward)
+        function openFolderByString(folderName) {
+            // Tìm thẻ details có data-folder tương ứng (không phân biệt hoa thường)
+            const el = document.querySelector(`.folder-item[data-folder="${folderName.toLowerCase()}"]`);
+            if (el) {
+                el.open = true;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -106,19 +160,17 @@
                 const lines = csvText.split('\n').filter(line => line.trim() !== '');
                 const rows = lines.slice(1);
 
-                // BƯỚC 1: LƯU TẤT CẢ DỮ LIỆU VÀO MẢNG
                 let parsedData = rows.map((row, originalIndex) => {
                     const cols = parseCSVLine(row);
                     if (cols.length < 2) return null;
 
                     const isEmulatorRaw = (cols[6] || '').trim().toUpperCase();
                     const isEmulator = isEmulatorRaw === 'TRUE' || isEmulatorRaw === 'YES';
-
                     const yearRaw = (cols[7] || '').trim();
                     const yearNum = parseInt(yearRaw);
 
                     return {
-                        idIndex: originalIndex, // Giữ ID gốc để scroll
+                        idIndex: originalIndex,
                         consoleName: cols[0] || '',
                         folderName: cols[1] || '',
                         rawExt: cols[2] || '',
@@ -131,15 +183,12 @@
                     };
                 }).filter(item => item !== null);
 
-                // BƯỚC 2: SẮP XẾP MẢNG
                 parsedData.sort((a, b) => a.sortYear - b.sortYear);
 
-                // BƯỚC 3: XUẤT RA HTML (Cho cả Tree và Cards)
                 let htmlTree = '';
                 let htmlCards = '';
 
                 parsedData.forEach(item => {
-                    // Cấu trúc Data Huy hiệu (Badge)
                     const extensions = item.rawExt ? item.rawExt
                         .split('|')
                         .filter(ext => ext.length !== 0)
@@ -154,9 +203,9 @@
                         ? `<span class="year-badge">${item.yearStr}</span>`
                         : '';
 
-                    // 1. Dựng giao diện Tree (Tab 1)
+                    // Bổ sung thuộc tính data-folder (chữ thường) để phục vụ cho việc lookup URL Query
                     htmlTree += `
-                    <details class="folder-item" id="tree-item-${item.idIndex}">
+                    <details class="folder-item" id="tree-item-${item.idIndex}" data-folder="${item.folderName.toLowerCase()}">
                         <summary class="folder-header">
                             <span class="arrow-icon">▶</span>
                             📂&nbsp;<span class="folder-path">Roms/${item.folderName}</span>
@@ -188,10 +237,9 @@
                     </details>
                     `;
 
-                    // 2. Dựng giao diện Cards (Tab 2)
-                    // Image fallback xử lý lỗi ảnh tự động ẩn theo quy chuẩn[cite: 4]
+                    // Truyền thêm item.folderName vào hàm openTreeItem
                     htmlCards += `
-                    <div class="card" onclick="openTreeItem(${item.idIndex})">
+                    <div class="card" onclick="openTreeItem(${item.idIndex}, '${item.folderName}')">
                         <div class="card-img-wrapper">
                             ${imgUrl ? `<img src="${imgUrl}" alt="${item.consoleName}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'placeholder-icon\\'>🎮</div>'">` : `<div class="placeholder-icon">📁</div>`}
                         </div>
@@ -209,6 +257,9 @@
 
                 document.getElementById('rom-tree').innerHTML = htmlTree || 'Không tìm thấy dữ liệu.';
                 document.getElementById('rom-cards').innerHTML = htmlCards || 'Không tìm thấy dữ liệu.';
+
+                // GỌI HÀM KIỂM TRA URL NGAY SAU KHI DỮ LIỆU ĐÃ RENDER XONG (INITIAL LOAD)
+                handleUrlState(false);
             })
             .catch(err => {
                 console.error('Lỗi:', err);
@@ -216,7 +267,5 @@
                 document.getElementById('rom-cards').innerHTML = '<span style="color:red;">Lỗi kết nối dữ liệu.</span>';
             });
     </script>
-
 </body>
-
 </html>
